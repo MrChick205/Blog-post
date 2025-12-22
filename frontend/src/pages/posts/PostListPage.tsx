@@ -99,7 +99,7 @@ const PostListPage = () => {
       }}
     >
       <Title level={3} style={{ marginBottom: 24 }}>
-        📰 Bài viết mới nhất
+        Bài viết mới nhất
       </Title>
 
       {loading ? (
@@ -146,7 +146,6 @@ const PostListPage = () => {
               ]}
             >
               <Space align="start" size="large">
-                {/* IMAGE */}
                 {post.image && (
                   <Link to={`/posts/${post.id}`}>
                     <Image
@@ -158,8 +157,6 @@ const PostListPage = () => {
                     />
                   </Link>
                 )}
-
-                {/* CONTENT */}
                 <div style={{ flex: 1 }}>
                   <List.Item.Meta
                     title={

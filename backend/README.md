@@ -72,7 +72,7 @@ npm run migrate
 5. **Generate Prisma Client và chạy Prisma migration:**
 ```bash
 # Generate Prisma Client
-npm run prisma:generate
+
 
 # Chạy Prisma migration (nếu chưa có tables)
 npm run prisma:migrate
@@ -95,7 +95,7 @@ npm start
 
 Server sẽ chạy tại `http://localhost:3000`
 
-## API Endpoints
+## APnpm run prisma:generateI Endpoints
 
 ### Users
 - `POST /api/users/register` - Đăng ký user mới

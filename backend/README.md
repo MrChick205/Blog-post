@@ -6,36 +6,26 @@ Express.js REST API cho ứng dụng blog với PostgreSQL database.
 
 ```
 backend/
-├── config/
-│   ├── database.js          # Database connection pool (pg)
-│   ├── prisma.js            # Prisma Client instance
-│   └── db-init.sql          # Database schema
+├── src/
+│   ├── config/
+│   │   ├── database.js          # Database connection pool (pg)
+│   │   ├── prisma.js            # Prisma Client instance
+│   │   └── db-init.sql          # Database schema (SQL)
+│   ├── middleware/
+│   │   └── auth.js              # JWT authentication middleware
+│   ├── modules/
+│   │   ├── users/               # User module
+│   │   ├── posts/               # Post module
+│   │   ├── comments/            # Comment module
+│   │   └── likes/               # Like module
+│   ├── scripts/
+│   │   ├── migrate.js           # Database migration script (SQL)
+│   │   └── setup-prisma.js      # Prisma setup helper
+│   ├── app.js                   # Express app configuration
+│   └── server.js                # Server entry point
 ├── prisma/
-│   └── schema.prisma        # Prisma schema definition
-├── middleware/
-│   └── auth.js              # JWT authentication middleware
-├── modules/
-│   ├── users/               # User module
-│   │   ├── user.model.js
-│   │   ├── user.controller.js
-│   │   └── user.routes.js
-│   ├── posts/               # Post module
-│   │   ├── post.model.js
-│   │   ├── post.controller.js
-│   │   └── post.routes.js
-│   ├── comments/            # Comment module
-│   │   ├── comment.model.js
-│   │   ├── comment.controller.js
-│   │   └── comment.routes.js
-│   └── likes/               # Like module
-│       ├── like.model.js
-│       ├── like.controller.js
-│       └── like.routes.js
-├── scripts/
-│   └── migrate.js           # Database migration script
-├── app.js                   # Express app configuration
-├── server.js                # Server entry point
-├── docker-compose.yml       # Docker PostgreSQL setup
+│   └── schema.prisma            # Prisma schema definition
+├── docker-compose.yml           # Docker PostgreSQL setup
 └── package.json
 ```
 

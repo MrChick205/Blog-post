@@ -4,8 +4,8 @@ const path = require('path');
 
 console.log('🔧 Setting up Prisma...\n');
 
-// Check if .env exists
-const envPath = path.join(__dirname, '..', '.env');
+// Check if .env exists (located at project root: backend/.env)
+const envPath = path.join(__dirname, '..', '..', '.env');
 if (!fs.existsSync(envPath)) {
   console.error('❌ File .env not found!');
   console.log('📝 Please create .env file from env.template');
@@ -25,9 +25,10 @@ console.log('✅ .env file found with DATABASE_URL\n');
 
 try {
   console.log('📦 Generating Prisma Client...');
-  execSync('npx prisma generate', { 
+  execSync('npx prisma generate', {
     stdio: 'inherit',
-    cwd: path.join(__dirname, '..')
+    // run from project root so Prisma picks up schema & .env
+    cwd: path.join(__dirname, '..', '..')
   });
   console.log('✅ Prisma Client generated successfully!\n');
 } catch (error) {

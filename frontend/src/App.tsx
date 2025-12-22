@@ -8,7 +8,10 @@ import PostListPage from './pages/posts/PostListPage';
 import PostDetailPage from './pages/posts/PostDetailPage';
 import PostEditorPage from './pages/posts/PostEditorPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+<<<<<<< HEAD
 import ProfilePage from './pages/profile/ProfilePage';
+=======
+>>>>>>> 5edf9f51939ca46f4fe88b656963df3d5ecd885d
 const { Content } = Layout;
 
 const AppRoutes = () => {
@@ -26,8 +29,12 @@ const AppRoutes = () => {
 
           <Route element={<MainLayout />}>
             <Route path="/" element={<PostListPage />} />
+<<<<<<< HEAD
              <Route path="/profile" element={<ProfilePage />} />
             {/* <Route path="/posts/:id" element={<PostDetailPage />} /> */}
+=======
+            <Route path="/posts/:id" element={<PostDetailPage />} />
+>>>>>>> 5edf9f51939ca46f4fe88b656963df3d5ecd885d
             <Route path="/posts/new" element={<PostEditorPage mode="create" />} />
             <Route path="/posts/:id/edit" element={<PostEditorPage mode="edit" />} />
           </Route>

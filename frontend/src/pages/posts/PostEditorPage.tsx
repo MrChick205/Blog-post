@@ -54,7 +54,7 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
       if (mode === 'create') {
         const res = await createPost(values);
         message.success('Đã tạo bài viết');
-        navigate(`/posts/${res.data.id}`);
+        navigate(`/posts/`);
       } else if (mode === 'edit' && id) {
         await updatePost(id, values);
         message.success('Đã cập nhật bài viết');

@@ -103,7 +103,7 @@ const ProfilePage = () => {
                   <Upload
                     listType="picture"
                     maxCount={1}
-                    beforeUpload={() => false} // prevent auto upload
+                    beforeUpload={() => false} 
                   >
                     <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
                   </Upload>

@@ -1,123 +1,194 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Form, Input, Button, message, Typography } from 'antd';
-import { useAuth } from '../../contexts/AuthContext';
-import { getPostById, createPost, updatePost } from '../../services/postService';
-import { Post } from '../../types';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Typography,
+  Spin,
+  Space,
+  Button,
+  Input,
+  List,
+  Avatar,
+  message,
+  Popconfirm,
+  Image,
+} from 'antd';
+import {
+  LikeOutlined,
+  LikeFilled,
+  MessageOutlined,
+  UserOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
 
-const { Title } = Typography;
+import { useAuth } from '@/contexts/AuthContext';
+import { getPostById, deletePost } from '@/services/postService';
+import {
+  getLikeCount,
+  getLikeStatus,
+  toggleLike,
+} from '@/services/likeService';
+import {
+  getCommentsByPost,
+  createComment,
+} from '@/services/commentService';
+
+const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
 
-interface PostEditorPageProps {
-  mode: 'create' | 'edit';
-}
-
-interface PostFormValues {
-  title: string;
-  content: string;
-  image?: string;
-}
-
-const PostEditorPage = ({ mode }: PostEditorPageProps) => {
+const PostDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [form] = Form.useForm<PostFormValues>();
-  const [loading, setLoading] = useState(mode === 'edit');
+
+  const [post, setPost] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Chưa login → đá về login
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
+  const isOwner = user && post && user.id === post.user_id;
 
-  // Load bài viết khi edit
   useEffect(() => {
-    const fetchPost = async () => {
-      if (mode === 'edit' && id) {
-        setLoading(true);
-        try {
-          const res = await getPostById(id);
-          const post: Post = res.data;
+    if (!id) return;
 
-          form.setFieldsValue({
-            title: post.title,
-            content: post.content,
-            image: post.image || '',
-          });
-        } catch {
-          message.error('Không thể tải bài viết');
-        } finally {
-          setLoading(false);
-        }
+    const fetchAll = async () => {
+      try {
+        const [postRes, likeCountRes, likeStatusRes, commentRes] =
+          await Promise.all([
+            getPostById(id),
+            getLikeCount(id),
+            getLikeStatus(id),
+            getCommentsByPost(id),
+          ]);
+
+        setPost(postRes.data);
+        setLikeCount(Number(likeCountRes.data.like_count));
+        setLiked(likeStatusRes.data.liked);
+        setComments(commentRes.data);
+      } catch {
+        message.error('Không thể tải dữ liệu');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchPost();
-  }, [mode, id, form]);
+    fetchAll();
+  }, [id]);
 
-  const onFinish = async (values: PostFormValues) => {
+  const handleLike = async () => {
+    if (!id) return;
+    try {
+      await toggleLike(id);
+      setLiked(prev => !prev);
+      setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+    } catch {
+      message.error('Không thể like');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    try {
+      await deletePost(id);
+      message.success('Đã xoá bài viết');
+      navigate('/posts');
+    } catch {
+      message.error('Không thể xoá bài viết');
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!id || !commentContent.trim()) return;
+
     setSubmitting(true);
     try {
-      if (mode === 'create') {
-        const res = await createPost(values);
-        message.success('Đã tạo bài viết');
-        navigate(`/posts/${res.data.id}`);
-      }
+      await createComment({
+        post_id: id,
+        content: commentContent,
+      });
 
-      if (mode === 'edit' && id) {
-        await updatePost(id, values);
-        message.success('Đã cập nhật bài viết');
-        navigate(`/posts/${id}`);
-      }
-    } catch (error: any) {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      setCommentContent('');
+      const res = await getCommentsByPost(id);
+      setComments(res.data);
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (loading) return <Spin />;
+
   return (
-    <Card loading={loading}>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        {mode === 'create' ? 'Viết bài mới' : 'Chỉnh sửa bài viết'}
-      </Title>
+    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <Title level={2}>{post.title}</Title>
 
-      <Form<PostFormValues>
-        layout="vertical"
-        form={form}
-        onFinish={onFinish}
-      >
-        <Form.Item
-          label="Tiêu đề"
-          name="title"
-          rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}
+      <Space wrap>
+        <Text type="secondary">
+          {post.username} · {dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}
+        </Text>
+
+        {isOwner && (
+          <Space>
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/posts/${id}/edit`)}
+            >
+              Sửa
+            </Button>
+            <Popconfirm
+              title="Xoá bài viết?"
+              okText="Xoá"
+              cancelText="Huỷ"
+              onConfirm={handleDelete}
+            >
+              <Button danger type="link" icon={<DeleteOutlined />}>
+                Xoá
+              </Button>
+            </Popconfirm>
+          </Space>
+        )}
+      </Space>
+
+      {/* IMAGE */}
+      {post.image && (
+        <Image
+          src={post.image}
+          style={{
+            width: '100%',
+            maxHeight: 400,
+            objectFit: 'cover',
+            borderRadius: 12,
+            marginTop: 16,
+          }}
+        />
+      )}
+
+      <Paragraph style={{ marginTop: 16 }}>
+        {post.content}
+      </Paragraph>
+
+      <Space size="large">
+        <Button
+          type="text"
+          icon={liked ? <LikeFilled /> : <LikeOutlined />}
+          onClick={handleLike}
         >
-          <Input placeholder="Nhập tiêu đề bài viết" />
-        </Form.Item>
+          {likeCount}
+        </Button>
 
-        <Form.Item
-          label="Nội dung"
-          name="content"
-          rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
-        >
-          <TextArea rows={8} placeholder="Nội dung bài viết..." />
-        </Form.Item>
+        <Button type="text" icon={<MessageOutlined />}>
+          {comments.length}
+        </Button>
+      </Space>
 
-        <Form.Item label="Ảnh (URL)" name="image">
-          <Input placeholder="https://example.com/image.jpg" />
-        </Form.Item>
-
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={submitting}>
-            {mode === 'create' ? 'Đăng bài' : 'Lưu thay đổi'}
-          </Button>
-        </Form.Item>
-      </Form>
-    </Card>
+    </div>
   );
 };
 
-export default PostEditorPage;
+export default PostDetailPage;

@@ -1,4 +1,5 @@
-import { Layout, Button, Space, Typography } from 'antd';
+import { Layout, Button, Space, Typography, Avatar, Tooltip} from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -30,6 +31,14 @@ const AppHeader = () => {
           ) : (
             <>
               <Link to="/posts/new"><Button type="primary">Viết bài</Button></Link>
+              <Tooltip title="Xem profile">
+                <Avatar
+                  style={{ cursor: 'pointer' }}
+                  src={user.avatar || undefined}
+                  icon={!user.avatar && <UserOutlined />}
+                  onClick={() => navigate('/profile')}
+                />
+              </Tooltip>
               <Text strong>{user.username}</Text>
               <Button danger onClick={handleLogout}>Đăng xuất</Button>
             </>

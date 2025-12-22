@@ -8,7 +8,6 @@ import PostListPage from './pages/posts/PostListPage';
 import PostDetailPage from './pages/posts/PostDetailPage';
 import PostEditorPage from './pages/posts/PostEditorPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-
 const { Content } = Layout;
 
 const AppRoutes = () => {
@@ -26,7 +25,7 @@ const AppRoutes = () => {
 
           <Route element={<MainLayout />}>
             <Route path="/" element={<PostListPage />} />
-            {/* <Route path="/posts/:id" element={<PostDetailPage />} /> */}
+            <Route path="/posts/:id" element={<PostDetailPage />} />
             <Route path="/posts/new" element={<PostEditorPage mode="create" />} />
             <Route path="/posts/:id/edit" element={<PostEditorPage mode="edit" />} />
           </Route>

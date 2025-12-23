@@ -45,9 +45,11 @@ const PostDetailPage = () => {
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // LIKE
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
+  // COMMENT
   const [comments, setComments] = useState<any[]>([]);
   const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -59,13 +61,17 @@ const PostDetailPage = () => {
 
     const fetchAll = async () => {
       try {
-        const [postRes, likeCountRes, likeStatusRes, commentRes] =
-          await Promise.all([
-            getPostById(id),
-            getLikeCount(id),
-            getLikeStatus(id),
-            getCommentsByPost(id),
-          ]);
+        const [
+          postRes,
+          likeCountRes,
+          likeStatusRes,
+          commentRes,
+        ] = await Promise.all([
+          getPostById(id),
+          getLikeCount(id),
+          getLikeStatus(id),
+          getCommentsByPost(id),
+        ]);
 
         setPost(postRes.data);
         setLikeCount(Number(likeCountRes.data.like_count));
@@ -81,17 +87,19 @@ const PostDetailPage = () => {
     fetchAll();
   }, [id]);
 
+  // LIKE
   const handleLike = async () => {
     if (!id) return;
     try {
       await toggleLike(id);
-      setLiked(prev => !prev);
-      setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+      setLiked((prev) => !prev);
+      setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
     } catch {
       message.error('Không thể like');
     }
   };
 
+  // DELETE POST
   const handleDelete = async () => {
     if (!id) return;
     try {
@@ -103,6 +111,7 @@ const PostDetailPage = () => {
     }
   };
 
+  // SUBMIT COMMENT
   const handleSubmitComment = async () => {
     if (!id || !commentContent.trim()) return;
 
@@ -116,6 +125,8 @@ const PostDetailPage = () => {
       setCommentContent('');
       const res = await getCommentsByPost(id);
       setComments(res.data);
+    } catch {
+      message.error('Gửi bình luận thất bại');
     } finally {
       setSubmitting(false);
     }
@@ -125,11 +136,14 @@ const PostDetailPage = () => {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      {/* TITLE */}
       <Title level={2}>{post.title}</Title>
 
-      <Space wrap>
+      {/* META + OWNER ACTION */}
+      <Space wrap style={{ marginBottom: 12 }}>
         <Text type="secondary">
-          {post.username} · {dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}
+          {post.username} ·{' '}
+          {dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}
         </Text>
 
         {isOwner && (
@@ -141,8 +155,10 @@ const PostDetailPage = () => {
             >
               Sửa
             </Button>
+
             <Popconfirm
               title="Xoá bài viết?"
+              description="Hành động này không thể hoàn tác"
               okText="Xoá"
               cancelText="Huỷ"
               onConfirm={handleDelete}
@@ -161,19 +177,19 @@ const PostDetailPage = () => {
           src={post.image}
           style={{
             width: '100%',
-            maxHeight: 400,
+            maxHeight: 420,
             objectFit: 'cover',
             borderRadius: 12,
-            marginTop: 16,
+            marginBottom: 16,
           }}
         />
       )}
 
-      <Paragraph style={{ marginTop: 16 }}>
-        {post.content}
-      </Paragraph>
+      {/* CONTENT */}
+      <Paragraph>{post.content}</Paragraph>
 
-      <Space size="large">
+      {/* ACTIONS */}
+      <Space size="large" style={{ marginTop: 12 }}>
         <Button
           type="text"
           icon={liked ? <LikeFilled /> : <LikeOutlined />}
@@ -187,6 +203,62 @@ const PostDetailPage = () => {
         </Button>
       </Space>
 
+      {/* COMMENT INPUT */}
+      <div style={{ marginTop: 32 }}>
+        <Title level={4}>Bình luận</Title>
+
+        <TextArea
+          rows={3}
+          placeholder={
+            user ? 'Viết bình luận...' : 'Đăng nhập để bình luận'
+          }
+          value={commentContent}
+          disabled={!user}
+          onChange={(e) => setCommentContent(e.target.value)}
+        />
+
+        <Button
+          type="primary"
+          loading={submitting}
+          style={{ marginTop: 8 }}
+          disabled={!user || !commentContent.trim()}
+          onClick={handleSubmitComment}
+        >
+          Gửi bình luận
+        </Button>
+      </div>
+
+      {/* COMMENT LIST */}
+      <List
+        style={{ marginTop: 24 }}
+        dataSource={comments}
+        locale={{ emptyText: 'Chưa có bình luận' }}
+        renderItem={(comment) => (
+          <List.Item>
+            <List.Item.Meta
+              avatar={
+                <Avatar
+                  src={comment.user_avatar}
+                  icon={<UserOutlined />}
+                />
+              }
+              title={
+                <Space>
+                  <Text strong>
+                    {comment.username || 'Ẩn danh'}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {dayjs(comment.created_at).format(
+                      'DD/MM/YYYY HH:mm'
+                    )}
+                  </Text>
+                </Space>
+              }
+              description={<Paragraph>{comment.content}</Paragraph>}
+            />
+          </List.Item>
+        )}
+      />
     </div>
   );
 };

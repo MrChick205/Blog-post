@@ -145,15 +145,25 @@ const PostListPage = () => {
                 </Space>,
               ]}
             >
-              <Space align="start" size="large">
-                {/* IMAGE */}
+              {/* ===== LAYOUT WRAPPER ===== */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  alignItems: 'flex-start',
+                }}
+              >
+                {/* IMAGE (chỉ render khi có ảnh) */}
                 {post.image && (
                   <Link to={`/posts/${post.id}`}>
                     <Image
                       src={post.image}
                       width={160}
                       height={110}
-                      style={{ objectFit: 'cover', borderRadius: 8 }}
+                      style={{
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                      }}
                       preview={false}
                     />
                   </Link>
@@ -182,12 +192,15 @@ const PostListPage = () => {
                   />
 
                   <Link to={`/posts/${post.id}`}>
-                    <Paragraph ellipsis={{ rows: 3 }}>
+                    <Paragraph
+                      ellipsis={{ rows: post.image ? 3 : 4 }}
+                      style={{ marginBottom: 0 }}
+                    >
                       {post.content}
                     </Paragraph>
                   </Link>
                 </div>
-              </Space>
+              </div>
             </List.Item>
           )}
         />

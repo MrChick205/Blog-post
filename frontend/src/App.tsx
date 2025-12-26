@@ -28,7 +28,7 @@ const AppRoutes = () => {
           <Route element={<MainLayout />}>
             <Route path="/" element={<PostListPage />} />
              <Route path="/profile" element={<ProfilePage />} />
-            {/* <Route path="/posts/:id" element={<PostDetailPage />} /> */}
+            <Route path="/posts/:id" element={<PostDetailPage />} />
             <Route path="/posts/new" element={<PostEditorPage mode="create" />} />
             <Route path="/posts/:id/edit" element={<PostEditorPage mode="edit" />} />
           </Route>

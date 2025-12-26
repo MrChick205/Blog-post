@@ -1,66 +1,56 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axios from '../config/axios';
 import { User } from '../types';
-import { loginApi, registerApi, getMeApi } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  updateUser: (data: Partial<User>) => void;
+  updateUser: (user: User) => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      getMeApi()
-        .then((response) => setUser(response.data))
-        .catch(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+    if (storedUser && storedToken) setUser(JSON.parse(storedUser));
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await loginApi(email, password);
-    localStorage.setItem('token', response.data.token);
-    setUser(response.data.user);
+    const res = await axios.post('/users/login', { email, password });
+    const { user, token } = res.data;
+    setUser(user);
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('token', token);
   };
 
-  const register = async (email: string, password: string, username: string) => {
-    const response = await registerApi({ email, password, username });
-    localStorage.setItem('token', response.data.token);
-    setUser(response.data.user);
+  const register = async (username: string, email: string, password: string) => {
+    await axios.post('/users/register', { username, email, password });
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
-  const updateUser = (data: Partial<User>) => {
-  setUser(prev => prev ? { ...prev, ...data } : null);
-};
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser)); 
+  };
+  
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout,updateUser  }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

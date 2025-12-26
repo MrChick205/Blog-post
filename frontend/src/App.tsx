@@ -14,7 +14,7 @@ const { Content } = Layout;
 
 const AppRoutes = () => {
   const { loading } = useAuth();
-  if (loading) return null; // hoặc spinner
+  if (loading) return null; 
 
   return (
     <Layout style={{ minHeight: '100vh' }}>

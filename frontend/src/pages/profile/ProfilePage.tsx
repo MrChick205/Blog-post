@@ -5,10 +5,11 @@ import {
 } from 'antd';
 import { UserOutlined, MailOutlined, UploadOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { getAllPosts, createPost, updatePost, deletePost } from '../../services/postService';
-import { uploadAvatarApi, updateProfileApi } from '../../services/authService';
+import { getAllPosts, deletePost } from '../../services/postService';
 import { Post } from '../../types';
 import dayjs from 'dayjs';
+import { updateProfileApi, getMeApi } from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -17,10 +18,9 @@ const ProfilePage = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [addingPost, setAddingPost] = useState(false);
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [profileForm] = Form.useForm();
-  const [postForm] = Form.useForm();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchPosts = async () => {
       if (!user) return;
@@ -37,51 +37,46 @@ const ProfilePage = () => {
   }, [user]);
 
   if (!user) return <Empty description="Bạn cần đăng nhập" />;
-  const onFinishProfile = async (values: any) => {
-    try {
-      if (values.avatar && values.avatar.file) {
-        const uploadRes = await uploadAvatarApi(values.avatar.file);
-        values.avatar = uploadRes.data.url;
-      } else {
-        delete values.avatar;
-      }
-      const res = await updateProfileApi(values);
+  const onFinishProfile = async (values) => {
+  try {
+    const updatedUser = await updateProfileApi({
+      username: values.username,
+      email: values.email,
+      avatar: values.avatar,
+    });
+    if (!updatedUser.data.username) {
+      const res = await getMeApi();
       updateUser(res.data);
-      message.success('Cập nhật thông tin thành công');
-      setEditingProfile(false);
-    } catch (err: any) {
-      console.error(err.response?.data || err);
-      message.error(err.response?.data?.message || 'Không thể cập nhật thông tin');
+    } else {
+      updateUser(updatedUser.data);
     }
-  };
-  const onFinishPost = async (values: any) => {
+    message.success('Cập nhật thông tin thành công');
+    setEditingProfile(false);
+  } catch (err) {
+    message.error(err.response?.data?.message || 'Không thể cập nhật thông tin');
+  }
+};
+
+
+
+  const handleDeletePost = async (postId: string) => {
     try {
-      if (editingPost) {
-        const res = await updatePost(editingPost.id, values);
-        setPosts(prev => prev.map(p => p.id === editingPost.id ? { ...p, ...res.data } : p));
-        message.success('Cập nhật bài viết thành công');
-        setEditingPost(null);
-      } else {
-        const res = await createPost({ ...values, user_id: user.id, username: user.username });
-        setPosts(prev => [res.data, ...prev]);
-        message.success('Thêm bài viết thành công');
-        setAddingPost(false);
-      }
-      postForm.resetFields();
+      await deletePost(postId);
+      setPosts(prev => prev.filter(p => p.id !== postId));
+      message.success('Xóa bài viết thành công');
     } catch (err) {
       console.error(err);
-      message.error('Lỗi khi lưu bài viết');
+      message.error('Xóa bài viết thất bại');
     }
   };
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto' }}>
-      {/* Thông tin user */}
+    <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px' }}>
       <Card style={{ marginBottom: 24 }}>
         <Form
           form={profileForm}
           layout="vertical"
-          initialValues={{ username: user.username, email: user.email }}
+          initialValues={{ username: user.username, email: user.email, avatar: user.avatar }}
           onFinish={onFinishProfile}
         >
           <Row gutter={16} align="middle">
@@ -101,7 +96,12 @@ const ProfilePage = () => {
                     <Tag color="blue">{posts.length} bài viết</Tag>
                   </div>
                   <div style={{ marginTop: 12 }}>
-                    <Button onClick={() => setEditingProfile(true)}>Chỉnh sửa thông tin</Button>
+                    <Space>
+                      <Button onClick={() => setEditingProfile(true)}>Chỉnh sửa thông tin</Button>
+                      <Button type="primary" onClick={() => navigate('/posts/new')}>
+                        Thêm bài viết mới
+                      </Button>
+                    </Space>
                   </div>
                 </>
               ) : (
@@ -112,10 +112,8 @@ const ProfilePage = () => {
                   <Form.Item label="Email" name="email" rules={[{ required: true }, { type: 'email' }]}>
                     <Input />
                   </Form.Item>
-                  <Form.Item label="Avatar" name="avatar">
-                    <Upload listType="picture" maxCount={1} beforeUpload={() => false}>
-                      <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
-                    </Upload>
+                  <Form.Item label="Avatar URL" name="avatar">
+                    <Input placeholder="https://example.com/avatar.jpg" />
                   </Form.Item>
                   <Form.Item>
                     <Space>
@@ -129,34 +127,6 @@ const ProfilePage = () => {
           </Row>
         </Form>
       </Card>
-
-      {/* Thêm / Sửa bài viết */}
-      {(addingPost || editingPost) && (
-        <Card style={{ marginBottom: 16 }}>
-          <Form
-            form={postForm}
-            layout="vertical"
-            initialValues={editingPost ? { title: editingPost.title, content: editingPost.content } : {}}
-            onFinish={onFinishPost}
-          >
-            <Form.Item label="Tiêu đề" name="title" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item label="Nội dung" name="content" rules={[{ required: true }]}>
-              <Input.TextArea rows={4} />
-            </Form.Item>
-            <Form.Item>
-              <Space>
-                <Button type="primary" htmlType="submit">Lưu</Button>
-                <Button onClick={() => { setAddingPost(false); setEditingPost(null); postForm.resetFields(); }}>Hủy</Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Card>
-      )}
-      <Button type="primary" style={{ marginBottom: 16 }} onClick={() => { setAddingPost(true); postForm.resetFields(); }}>
-        Thêm bài viết mới
-      </Button>
       <Card title="Bài viết của bạn">
         {loading ? (
           <>
@@ -174,22 +144,36 @@ const ProfilePage = () => {
               <List.Item
                 key={post.id}
                 actions={[
-                  <Button type="link" key="edit" onClick={() => {
-                    setEditingPost(post);
-                    postForm.setFieldsValue({ title: post.title, content: post.content });
-                  }}>Sửa</Button>,
-                  <Button type="link" danger key="delete" onClick={async () => {
-                    try {
-                      await deletePost(post.id);
-                      setPosts(prev => prev.filter(p => p.id !== post.id));
-                      message.success('Xóa bài viết thành công');
-                    } catch (err) {
-                      console.error(err);
-                      message.error('Xóa bài viết thất bại');
-                    }
-                  }}>Xóa</Button>
+                  <Button
+                    type="link"
+                    key="edit"
+                    onClick={() => navigate(`/posts/${post.id}/edit`)}
+                  >
+                    Sửa
+                  </Button>,
+                  <Button
+                    type="link"
+                    danger
+                    key="delete"
+                    onClick={() => handleDeletePost(post.id)}
+                  >
+                    Xóa
+                  </Button>
                 ]}
               >
+                {post.image && (
+                  <img
+                    src={post.image}
+                    alt="Ảnh bài viết"
+                    style={{
+                      width: '100%',
+                      maxHeight: 200,
+                      objectFit: 'cover',
+                      borderRadius: 8,
+                      marginBottom: 12
+                    }}
+                  />
+                )}
                 <List.Item.Meta
                   title={<Text strong>{post.title}</Text>}
                   description={<Text type="secondary">{dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}</Text>}

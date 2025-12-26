@@ -1,17 +1,14 @@
-import { Card, Form, Input, Button, Typography, message } from 'antd';
+import { Card, Form, Input, Button, Typography, message, Divider, Space } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPostById, createPost, updatePost } from '../../services/postService';
 import { Post } from '../../types';
-
 const { Title } = Typography;
 const { TextArea } = Input;
-
 interface PostEditorPageProps {
   mode: 'create' | 'edit';
 }
-
 interface PostFormValues {
   title: string;
   content: string;
@@ -52,7 +49,7 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
     setSubmitting(true);
     try {
       if (mode === 'create') {
-        const res = await createPost(values);
+        await createPost(values);
         message.success('Đã tạo bài viết');
         navigate(`/posts/`);
       } else if (mode === 'edit' && id) {
@@ -67,30 +64,92 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
     }
   };
 
+  const handleCancel = () => {
+    if (mode === 'edit' && id) {
+      navigate(`/posts/${id}`);
+    } else {
+      navigate('/posts');
+    }
+  };
+
   return (
-    <Card loading={loading} style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-      <Title level={3}>{mode === 'create' ? 'Viết bài mới' : 'Chỉnh sửa bài viết'}</Title>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: '40px auto',
+        padding: '0 16px',
+      }}
+    >
+      <Card
+        loading={loading}
+        style={{
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          borderRadius: 12,
+          backgroundColor: '#fdfdfd',
+          padding: 24,
+        }}
+      >
+        <Title level={3} style={{ marginBottom: 8 }}>
+          {mode === 'create' ? 'Viết bài mới' : 'Chỉnh sửa bài viết'}
+        </Title>
+        <Divider />
 
-      <Form form={form} layout="vertical" onFinish={onFinish}>
-        <Form.Item label="Tiêu đề" name="title" rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}>
-          <Input placeholder="Nhập tiêu đề bài viết" />
-        </Form.Item>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          style={{ marginTop: 16 }}
+        >
+          <Form.Item
+            label="Tiêu đề"
+            name="title"
+            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}
+          >
+            <Input
+              placeholder="Nhập tiêu đề bài viết"
+              size="large"
+              style={{ borderRadius: 8 }}
+            />
+          </Form.Item>
 
-        <Form.Item label="Nội dung" name="content" rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}>
-          <TextArea rows={8} placeholder="Nội dung bài viết..." />
-        </Form.Item>
+          <Form.Item
+            label="Nội dung"
+            name="content"
+            rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
+          >
+            <TextArea
+              rows={8}
+              placeholder="Nội dung bài viết..."
+              style={{ borderRadius: 8 }}
+            />
+          </Form.Item>
 
-        <Form.Item label="Ảnh (URL)" name="image">
-          <Input placeholder="https://example.com/image.jpg" />
-        </Form.Item>
+          <Form.Item label="Ảnh (URL)" name="image">
+            <Input
+              placeholder="https://example.com/image.jpg"
+              size="large"
+              style={{ borderRadius: 8 }}
+            />
+          </Form.Item>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={submitting} block>
-            {mode === 'create' ? 'Đăng bài' : 'Lưu thay đổi'}
-          </Button>
-        </Form.Item>
-      </Form>
-    </Card>
+          <Form.Item>
+            <Space size="middle" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button onClick={handleCancel} style={{ borderRadius: 8 }}>
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={submitting}
+                style={{ borderRadius: 8 }}
+              >
+                {mode === 'create' ? 'Đăng bài' : 'Lưu thay đổi'}
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
   );
 };
 

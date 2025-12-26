@@ -8,22 +8,20 @@ import {
   Button,
   Space,
   Image,
-} from 'antd';
-import {
-  MessageOutlined,
-  LikeOutlined,
-  LikeFilled,
-} from '@ant-design/icons';
-import { Link } from 'react-router-dom';
-import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { getAllPosts } from '../../services/postService';
+} from "antd";
+import { MessageOutlined, LikeOutlined, LikeFilled } from "@ant-design/icons";
+import { Link } from "react-router-dom";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import { getAllPosts } from "../../services/postService";
 import {
   getLikeStatus,
   getLikeCount,
   toggleLike,
-} from '../../services/likeService';
-import { Post } from '../../types';
+} from "../../services/likeService";
+import { Post } from "../../types";
+import { useAuth } from "../../contexts/AuthContext";
+import useLoginModal from "../auth/UseLoginModal";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -36,6 +34,8 @@ const PostListPage = () => {
   const [posts, setPosts] = useState<PostUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [likingId, setLikingId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { showLoginModal } = useLoginModal();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -45,7 +45,11 @@ const PostListPage = () => {
         const postsWithLike = await Promise.all(
           res.data.map(async (post: Post) => {
             const [statusRes, countRes] = await Promise.all([
-              getLikeStatus(post.id),
+              user
+                ? getLikeStatus(post.id).catch(() => ({
+                    data: { liked: false },
+                  }))
+                : Promise.resolve({ data: { liked: false } }),
               getLikeCount(post.id),
             ]);
 
@@ -64,16 +68,20 @@ const PostListPage = () => {
     };
 
     fetchPosts();
-  }, []);
+  }, [user]);
 
   const handleLike = async (postId: string) => {
+    if (!user) {
+      showLoginModal();
+      return;
+    }
     try {
       setLikingId(postId);
       await toggleLike(postId);
       const countRes = await getLikeCount(postId);
 
-      setPosts(prev =>
-        prev.map(post =>
+      setPosts((prev) =>
+        prev.map((post) =>
           post.id === postId
             ? {
                 ...post,
@@ -91,10 +99,10 @@ const PostListPage = () => {
   return (
     <Card
       style={{
-        minHeight: '80vh',
+        minHeight: "80vh",
         maxWidth: 900,
-        margin: '0 auto',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+        margin: "0 auto",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
         borderRadius: 12,
       }}
     >
@@ -118,8 +126,8 @@ const PostListPage = () => {
             <List.Item
               key={post.id}
               style={{
-                padding: '20px 0',
-                borderBottom: '1px solid #f0f0f0',
+                padding: "20px 0",
+                borderBottom: "1px solid #f0f0f0",
               }}
               actions={[
                 <Button
@@ -127,7 +135,7 @@ const PostListPage = () => {
                   type="text"
                   icon={
                     post.liked ? (
-                      <LikeFilled style={{ color: '#1677ff' }} />
+                      <LikeFilled style={{ color: "#1677ff" }} />
                     ) : (
                       <LikeOutlined />
                     )
@@ -139,18 +147,16 @@ const PostListPage = () => {
                 </Button>,
                 <Space key="comment">
                   <MessageOutlined />
-                  <Text type="secondary">
-                    {Number(post.comment_count)}
-                  </Text>
+                  <Text type="secondary">{Number(post.comment_count)}</Text>
                 </Space>,
               ]}
             >
               {/* ===== LAYOUT WRAPPER ===== */}
               <div
                 style={{
-                  display: 'flex',
+                  display: "flex",
                   gap: 16,
-                  alignItems: 'flex-start',
+                  alignItems: "flex-start",
                 }}
               >
                 {/* IMAGE (chỉ render khi có ảnh) */}
@@ -161,7 +167,7 @@ const PostListPage = () => {
                       width={160}
                       height={110}
                       style={{
-                        objectFit: 'cover',
+                        objectFit: "cover",
                         borderRadius: 8,
                       }}
                       preview={false}
@@ -183,9 +189,7 @@ const PostListPage = () => {
                       <Space size="middle">
                         <Tag color="blue">{post.username}</Tag>
                         <Text type="secondary">
-                          {dayjs(post.created_at).format(
-                            'DD/MM/YYYY HH:mm'
-                          )}
+                          {dayjs(post.created_at).format("DD/MM/YYYY HH:mm")}
                         </Text>
                       </Space>
                     }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Typography,
   Spin,
@@ -11,7 +11,7 @@ import {
   message,
   Popconfirm,
   Image,
-} from 'antd';
+} from "antd";
 import {
   LikeOutlined,
   LikeFilled,
@@ -19,20 +19,18 @@ import {
   UserOutlined,
   EditOutlined,
   DeleteOutlined,
-} from '@ant-design/icons';
-import dayjs from 'dayjs';
+} from "@ant-design/icons";
+import dayjs from "dayjs";
 
-import { useAuth } from '@/contexts/AuthContext';
-import { getPostById, deletePost } from '@/services/postService';
+import { useAuth } from "@/contexts/AuthContext";
+import { getPostById, deletePost } from "@/services/postService";
 import {
   getLikeCount,
   getLikeStatus,
   toggleLike,
-} from '@/services/likeService';
-import {
-  getCommentsByPost,
-  createComment,
-} from '@/services/commentService';
+} from "@/services/likeService";
+import { getCommentsByPost, createComment } from "@/services/commentService";
+import useLoginModal from "../auth/UseLoginModal";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -41,6 +39,7 @@ const PostDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showLoginModal } = useLoginModal();
 
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +50,7 @@ const PostDetailPage = () => {
 
   // COMMENT
   const [comments, setComments] = useState<any[]>([]);
-  const [commentContent, setCommentContent] = useState('');
+  const [commentContent, setCommentContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const isOwner = user && post && user.id === post.user_id;
@@ -61,41 +60,43 @@ const PostDetailPage = () => {
 
     const fetchAll = async () => {
       try {
-        const [
-          postRes,
-          likeCountRes,
-          likeStatusRes,
-          commentRes,
-        ] = await Promise.all([
-          getPostById(id),
-          getLikeCount(id),
-          getLikeStatus(id),
-          getCommentsByPost(id),
-        ]);
+        const [postRes, likeCountRes, likeStatusRes, commentRes] =
+          await Promise.all([
+            getPostById(id),
+            getLikeCount(id),
+            user
+              ? getLikeStatus(id).catch(() => ({ data: { liked: false } }))
+              : Promise.resolve({ data: { liked: false } }),
+            getCommentsByPost(id),
+          ]);
 
         setPost(postRes.data);
         setLikeCount(Number(likeCountRes.data.like_count));
         setLiked(likeStatusRes.data.liked);
         setComments(commentRes.data);
       } catch {
-        message.error('Không thể tải dữ liệu');
+        message.error("Không thể tải dữ liệu");
       } finally {
         setLoading(false);
       }
     };
 
     fetchAll();
-  }, [id]);
+  }, [id, user]);
 
   // LIKE
   const handleLike = async () => {
+    if (!user) {
+      showLoginModal();
+      return;
+    }
     if (!id) return;
     try {
       await toggleLike(id);
       setLiked((prev) => !prev);
       setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
     } catch {
-      message.error('Không thể like');
+      message.error("Không thể like");
     }
   };
 
@@ -104,15 +105,19 @@ const PostDetailPage = () => {
     if (!id) return;
     try {
       await deletePost(id);
-      message.success('Đã xoá bài viết');
-      navigate('/posts');
+      message.success("Đã xoá bài viết");
+      navigate("/posts");
     } catch {
-      message.error('Không thể xoá bài viết');
+      message.error("Không thể xoá bài viết");
     }
   };
 
   // SUBMIT COMMENT
   const handleSubmitComment = async () => {
+    if (!user) {
+      showLoginModal();
+      return;
+    }
     if (!id || !commentContent.trim()) return;
 
     setSubmitting(true);
@@ -122,11 +127,11 @@ const PostDetailPage = () => {
         content: commentContent,
       });
 
-      setCommentContent('');
+      setCommentContent("");
       const res = await getCommentsByPost(id);
       setComments(res.data);
     } catch {
-      message.error('Gửi bình luận thất bại');
+      message.error("Gửi bình luận thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -135,15 +140,14 @@ const PostDetailPage = () => {
   if (loading) return <Spin />;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ maxWidth: 800, margin: "0 auto" }}>
       {/* TITLE */}
       <Title level={2}>{post.title}</Title>
 
       {/* META + OWNER ACTION */}
       <Space wrap style={{ marginBottom: 12 }}>
         <Text type="secondary">
-          {post.username} ·{' '}
-          {dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}
+          {post.username} · {dayjs(post.created_at).format("DD/MM/YYYY HH:mm")}
         </Text>
 
         {isOwner && (
@@ -176,9 +180,9 @@ const PostDetailPage = () => {
         <Image
           src={post.image}
           style={{
-            width: '100%',
+            width: "100%",
             maxHeight: 420,
-            objectFit: 'cover',
+            objectFit: "cover",
             borderRadius: 12,
             marginBottom: 16,
           }}
@@ -209,11 +213,8 @@ const PostDetailPage = () => {
 
         <TextArea
           rows={3}
-          placeholder={
-            user ? 'Viết bình luận...' : 'Đăng nhập để bình luận'
-          }
+          placeholder={"Viết bình luận..."}
           value={commentContent}
-          disabled={!user}
           onChange={(e) => setCommentContent(e.target.value)}
         />
 
@@ -221,7 +222,7 @@ const PostDetailPage = () => {
           type="primary"
           loading={submitting}
           style={{ marginTop: 8 }}
-          disabled={!user || !commentContent.trim()}
+          disabled={!commentContent.trim()}
           onClick={handleSubmitComment}
         >
           Gửi bình luận
@@ -232,25 +233,18 @@ const PostDetailPage = () => {
       <List
         style={{ marginTop: 24 }}
         dataSource={comments}
-        locale={{ emptyText: 'Chưa có bình luận' }}
+        locale={{ emptyText: "Chưa có bình luận" }}
         renderItem={(comment) => (
           <List.Item>
             <List.Item.Meta
               avatar={
-                <Avatar
-                  src={comment.user_avatar}
-                  icon={<UserOutlined />}
-                />
+                <Avatar src={comment.user_avatar} icon={<UserOutlined />} />
               }
               title={
                 <Space>
-                  <Text strong>
-                    {comment.username || 'Ẩn danh'}
-                  </Text>
+                  <Text strong>{comment.username || "Ẩn danh"}</Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    {dayjs(comment.created_at).format(
-                      'DD/MM/YYYY HH:mm'
-                    )}
+                    {dayjs(comment.created_at).format("DD/MM/YYYY HH:mm")}
                   </Text>
                 </Space>
               }

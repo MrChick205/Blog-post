@@ -83,11 +83,7 @@ const PostListPage = () => {
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
-            ? {
-                ...post,
-                liked: !post.liked,
-                likeCount: Number(countRes.data.like_count),
-              }
+            ? { ...post, liked: !post.liked, likeCount: Number(countRes.data.like_count) }
             : post
         )
       );
@@ -97,7 +93,7 @@ const PostListPage = () => {
   };
 
   return (
-    <Card
+    <div
       style={{
         minHeight: "80vh",
         maxWidth: 900,
@@ -106,13 +102,13 @@ const PostListPage = () => {
         borderRadius: 12,
       }}
     >
-      <Title level={3} style={{ marginBottom: 24 }}>
-        📰 Bài viết mới nhất
+      <Title level={2} style={{ marginBottom: 24, textAlign: 'center', color: '#1677ff' }}>
+        Bài viết mới nhất
       </Title>
 
       {loading ? (
         <>
-          <Skeleton active paragraph={{ rows: 4 }} />
+          <Skeleton active paragraph={{ rows: 4 }} style={{ marginBottom: 24 }} />
           <Skeleton active paragraph={{ rows: 4 }} />
         </>
       ) : posts.length === 0 ? (
@@ -142,6 +138,7 @@ const PostListPage = () => {
                   }
                   loading={likingId === post.id}
                   onClick={() => handleLike(post.id)}
+                  style={{ color: post.liked ? '#1677ff' : '#555' }}
                 >
                   {post.likeCount}
                 </Button>,
@@ -151,7 +148,6 @@ const PostListPage = () => {
                 </Space>,
               ]}
             >
-              {/* ===== LAYOUT WRAPPER ===== */}
               <div
                 style={{
                   display: "flex",
@@ -159,7 +155,6 @@ const PostListPage = () => {
                   alignItems: "flex-start",
                 }}
               >
-                {/* IMAGE (chỉ render khi có ảnh) */}
                 {post.image && (
                   <Link to={`/posts/${post.id}`}>
                     <Image
@@ -174,31 +169,28 @@ const PostListPage = () => {
                     />
                   </Link>
                 )}
-
-                {/* CONTENT */}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <List.Item.Meta
                     title={
                       <Link to={`/posts/${post.id}`}>
-                        <Text strong style={{ fontSize: 16 }}>
+                        <Text strong style={{ fontSize: 18, color: '#0a1f44' }}>
                           {post.title}
                         </Text>
                       </Link>
                     }
                     description={
-                      <Space size="middle">
-                        <Tag color="blue">{post.username}</Tag>
+                      <Space size="small">
+                        <Tag color="#66bbe9ff">{post.username}</Tag>
                         <Text type="secondary">
                           {dayjs(post.created_at).format("DD/MM/YYYY HH:mm")}
                         </Text>
                       </Space>
                     }
                   />
-
                   <Link to={`/posts/${post.id}`}>
                     <Paragraph
                       ellipsis={{ rows: post.image ? 3 : 4 }}
-                      style={{ marginBottom: 0 }}
+                      style={{ marginBottom: 0, color: '#333' }}
                     >
                       {post.content}
                     </Paragraph>
@@ -209,7 +201,7 @@ const PostListPage = () => {
           )}
         />
       )}
-    </Card>
+    </div>
   );
 };
 

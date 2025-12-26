@@ -11,6 +11,8 @@ import {
   message,
   Popconfirm,
   Image,
+  Card,
+  Divider
 } from "antd";
 import {
   LikeOutlined,
@@ -140,42 +142,61 @@ const PostDetailPage = () => {
   if (loading) return <Spin />;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto" }}>
-      {/* TITLE */}
-      <Title level={2}>{post.title}</Title>
+    <Card
+      style={{
+        maxWidth: 800,
+        margin: "32px auto",
+        borderRadius: 16,
+        boxShadow: "0 10px 32px rgba(0,0,0,0.08)",
+        padding: 24,
+      }}
+    >
+      {/* ===== HEADER ===== */}
+      <Space direction="vertical" size={6} style={{ width: "100%" }}>
+        <Title level={2} style={{ marginBottom: 0 }}>
+          {post.title}
+        </Title>
 
-      {/* META + OWNER ACTION */}
-      <Space wrap style={{ marginBottom: 12 }}>
-        <Text type="secondary">
-          {post.username} · {dayjs(post.created_at).format("DD/MM/YYYY HH:mm")}
-        </Text>
+        <Space wrap>
+          <Text type="secondary">
+            {post.username} · {dayjs(post.created_at).format("DD/MM/YYYY HH:mm")}
+          </Text>
 
-        {isOwner && (
-          <Space>
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => navigate(`/posts/${id}/edit`)}
-            >
-              Sửa
-            </Button>
-
-            <Popconfirm
-              title="Xoá bài viết?"
-              description="Hành động này không thể hoàn tác"
-              okText="Xoá"
-              cancelText="Huỷ"
-              onConfirm={handleDelete}
-            >
-              <Button danger type="link" icon={<DeleteOutlined />}>
-                Xoá
+          {isOwner && (
+            <Space>
+              <Button
+                size="small"
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/posts/${id}/edit`)}
+              >
+                Sửa
               </Button>
-            </Popconfirm>
-          </Space>
-        )}
+
+              <Popconfirm
+                title="Xoá bài viết?"
+                description="Hành động này không thể hoàn tác"
+                okText="Xoá"
+                cancelText="Huỷ"
+                onConfirm={handleDelete}
+              >
+                <Button
+                  size="small"
+                  danger
+                  type="link"
+                  icon={<DeleteOutlined />}
+                >
+                  Xoá
+                </Button>
+              </Popconfirm>
+            </Space>
+          )}
+        </Space>
       </Space>
 
-      {/* IMAGE */}
+      <Divider />
+
+      {/* ===== IMAGE ===== */}
       {post.image && (
         <Image
           src={post.image}
@@ -189,31 +210,44 @@ const PostDetailPage = () => {
         />
       )}
 
-      {/* CONTENT */}
-      <Paragraph>{post.content}</Paragraph>
+      {/* ===== CONTENT ===== */}
+      <Paragraph style={{ fontSize: 16, lineHeight: 1.7 }}>
+        {post.content}
+      </Paragraph>
 
-      {/* ACTIONS */}
-      <Space size="large" style={{ marginTop: 12 }}>
+      <Divider />
+
+      {/* ===== ACTIONS ===== */}
+      <Space size="large">
         <Button
           type="text"
-          icon={liked ? <LikeFilled /> : <LikeOutlined />}
+          icon={
+            liked ? (
+              <LikeFilled style={{ color: "#1677ff" }} />
+            ) : (
+              <LikeOutlined />
+            )
+          }
           onClick={handleLike}
         >
           {likeCount}
         </Button>
 
-        <Button type="text" icon={<MessageOutlined />}>
-          {comments.length}
-        </Button>
+        <Space>
+          <MessageOutlined />
+          <Text>{comments.length}</Text>
+        </Space>
       </Space>
 
-      {/* COMMENT INPUT */}
-      <div style={{ marginTop: 32 }}>
+      <Divider />
+
+      {/* ===== COMMENT INPUT ===== */}
+      <div>
         <Title level={4}>Bình luận</Title>
 
         <TextArea
           rows={3}
-          placeholder={"Viết bình luận..."}
+          placeholder="Viết bình luận..."
           value={commentContent}
           onChange={(e) => setCommentContent(e.target.value)}
         />
@@ -229,16 +263,20 @@ const PostDetailPage = () => {
         </Button>
       </div>
 
-      {/* COMMENT LIST */}
+      {/* ===== COMMENT LIST ===== */}
       <List
         style={{ marginTop: 24 }}
         dataSource={comments}
         locale={{ emptyText: "Chưa có bình luận" }}
+        itemLayout="horizontal"
         renderItem={(comment) => (
           <List.Item>
             <List.Item.Meta
               avatar={
-                <Avatar src={comment.user_avatar} icon={<UserOutlined />} />
+                <Avatar
+                  src={comment.user_avatar}
+                  icon={<UserOutlined />}
+                />
               }
               title={
                 <Space>
@@ -248,13 +286,18 @@ const PostDetailPage = () => {
                   </Text>
                 </Space>
               }
-              description={<Paragraph>{comment.content}</Paragraph>}
+              description={
+                <Paragraph style={{ marginBottom: 0 }}>
+                  {comment.content}
+                </Paragraph>
+              }
             />
           </List.Item>
         )}
       />
-    </div>
+    </Card>
   );
+
 };
 
 export default PostDetailPage;

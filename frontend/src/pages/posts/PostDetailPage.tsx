@@ -170,8 +170,6 @@ const PostDetailPage = () => {
           </Space>
         )}
       </Space>
-
-      {/* IMAGE */}
       {post.image && (
         <Image
           src={post.image}

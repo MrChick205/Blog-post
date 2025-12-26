@@ -8,11 +8,13 @@ import PostListPage from './pages/posts/PostListPage';
 import PostDetailPage from './pages/posts/PostDetailPage';
 import PostEditorPage from './pages/posts/PostEditorPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import ProfilePage from './pages/profile/ProfilePage';
+
 const { Content } = Layout;
 
 const AppRoutes = () => {
   const { loading } = useAuth();
-  if (loading) return null; // hoặc spinner
+  if (loading) return null; 
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -25,6 +27,7 @@ const AppRoutes = () => {
 
           <Route element={<MainLayout />}>
             <Route path="/" element={<PostListPage />} />
+             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/posts/:id" element={<PostDetailPage />} />
             <Route path="/posts/new" element={<PostEditorPage mode="create" />} />
             <Route path="/posts/:id/edit" element={<PostEditorPage mode="edit" />} />

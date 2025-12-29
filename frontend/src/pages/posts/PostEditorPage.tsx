@@ -1,24 +1,12 @@
-import {
-  Card,
-  Form,
-  Input,
-  Button,
-  Typography,
-  message,
-  Divider,
-  Space,
-  Image,
-} from 'antd';
+import { Card, Form, Input, Button, Typography, message, Divider, Space, Image } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import {
-  getPostById,
-  createPost,
-  updatePost,
-} from '../../services/postService';
+import { getPostById, createPost, updatePost } from '../../services/postService';
 import { Post } from '../../types';
 import { getImageUrl } from '@/utils/image';
+
+import '../css/PostEditorPage.css';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -40,8 +28,6 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
 
   const [loading, setLoading] = useState(mode === 'edit');
   const [submitting, setSubmitting] = useState(false);
-
-  // ===== IMAGE STATE =====
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -61,8 +47,6 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
             title: post.title,
             content: post.content,
           });
-
-          // ✅ LƯU ẢNH CŨ
           setCurrentImage(post.image || null);
         } catch {
           message.error('Không thể tải bài viết');
@@ -81,8 +65,6 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
       const formData = new FormData();
       formData.append('title', values.title);
       formData.append('content', values.content);
-
-      // ✅ CHỈ GỬI FILE KHI USER CHỌN ẢNH MỚI
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -112,18 +94,10 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '48px auto', padding: '0 16px' }}>
-      <Card
-        loading={loading}
-        style={{
-          borderRadius: 16,
-          boxShadow: '0 10px 32px rgba(0,0,0,0.08)',
-          padding: 32,
-        }}
-      >
-        {/* ===== HEADER ===== */}
-        <Space direction="vertical" size={4} style={{ width: '100%' }}>
-          <Title level={3} style={{ marginBottom: 0 }}>
+    <div className="post-editor-container">
+      <Card className="post-editor-card" loading={loading}>
+        <Space direction="vertical" size={4} className="post-editor-header">
+          <Title level={3} className="post-editor-title">
             {mode === 'create' ? 'Viết bài mới' : 'Chỉnh sửa bài viết'}
           </Title>
           <Text type="secondary">
@@ -135,13 +109,7 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
 
         <Divider style={{ margin: '24px 0' }} />
 
-        {/* ===== FORM ===== */}
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          style={{ maxWidth: 720 }}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish} className="post-editor-form">
           <Form.Item
             label="Tiêu đề"
             name="title"
@@ -158,29 +126,23 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
             <TextArea rows={10} />
           </Form.Item>
 
-          {/* ===== ẢNH HIỆN TẠI ===== */}
           {currentImage && !imageFile && (
             <Form.Item label="Ảnh hiện tại">
               <Image
                 src={getImageUrl(currentImage) || ''}
-                width={240}
-                style={{ borderRadius: 12 }}
+                className="post-editor-image"
               />
             </Form.Item>
           )}
-
-          {/* ===== PREVIEW ẢNH MỚI ===== */}
           {imageFile && (
             <Form.Item label="Ảnh mới">
               <Image
                 src={URL.createObjectURL(imageFile)}
-                width={240}
-                style={{ borderRadius: 12 }}
+                className="post-editor-image"
               />
             </Form.Item>
           )}
 
-          {/* ===== FILE INPUT ===== */}
           <Form.Item label="Đổi ảnh (tuỳ chọn)">
             <input
               type="file"
@@ -192,9 +154,8 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
             />
           </Form.Item>
 
-          {/* ===== ACTIONS ===== */}
-          <Form.Item style={{ marginTop: 32 }}>
-            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Form.Item className="post-editor-buttons">
+            <Space>
               <Button onClick={handleCancel}>Hủy</Button>
               <Button type="primary" htmlType="submit" loading={submitting}>
                 {mode === 'create' ? 'Đăng bài' : 'Lưu thay đổi'}

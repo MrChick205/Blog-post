@@ -26,7 +26,6 @@ const LikeButton = ({ postId }: LikeButtonProps) => {
         setLiked(statusRes.data.liked);
       }
     } catch {
-      // ignore
     }
   };
 

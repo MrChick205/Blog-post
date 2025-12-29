@@ -1,15 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Card, Typography, Avatar, Row, Col, List,
-  Skeleton, Empty, Tag, Button, Space, Form, Input, Upload, message
+  Card,
+  Typography,
+  Avatar,
+  Row,
+  Col,
+  List,
+  Skeleton,
+  Empty,
+  Tag,
+  Button,
+  Space,
+  Form,
+  Input,
+  message,
 } from 'antd';
-import { UserOutlined, MailOutlined, UploadOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAllPosts, deletePost } from '../../services/postService';
 import { Post } from '../../types';
 import dayjs from 'dayjs';
-import { updateProfileApi, getMeApi } from '../../services/authService';
+import { updateProfileApi } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
+import { getImageUrl } from '@/utils/image';
+
+import '../css/ProfilePage.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -18,135 +33,192 @@ const ProfilePage = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
+
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+
   const [profileForm] = Form.useForm();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchPosts = async () => {
-      if (!user) return;
       setLoading(true);
       try {
         const res = await getAllPosts();
-        const userPosts = res.data.filter((p: Post) => p.user_id === user.id);
-        setPosts(userPosts);
+        setPosts(res.data.filter((p: Post) => p.user_id === user.id));
       } finally {
         setLoading(false);
       }
     };
+
     fetchPosts();
+    setPreviewAvatar(user.avatar || null);
   }, [user]);
 
   if (!user) return <Empty description="Bạn cần đăng nhập" />;
-  const onFinishProfile = async (values) => {
-  try {
-    const updatedUser = await updateProfileApi({
-      username: values.username,
-      email: values.email,
-      avatar: values.avatar,
-    });
-    if (!updatedUser.data.username) {
-      const res = await getMeApi();
+  const onFinishProfile = async (values: any) => {
+    try {
+      const formData = new FormData();
+      formData.append('username', values.username);
+      formData.append('email', values.email);
+      if (avatarFile) {
+        formData.append('avatar', avatarFile);
+      }
+
+      const res = await updateProfileApi(formData);
+
       updateUser(res.data);
-    } else {
-      updateUser(updatedUser.data);
+
+      setPreviewAvatar(res.data.avatar || null);
+      setAvatarFile(null);
+      setEditingProfile(false);
+
+      profileForm.setFieldsValue({
+        username: res.data.username,
+        email: res.data.email,
+      });
+
+      message.success('Cập nhật thông tin thành công');
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Không thể cập nhật thông tin');
     }
-    message.success('Cập nhật thông tin thành công');
-    setEditingProfile(false);
-  } catch (err) {
-    message.error(err.response?.data?.message || 'Không thể cập nhật thông tin');
-  }
-};
-
-
-
+  };
   const handleDeletePost = async (postId: string) => {
     try {
       await deletePost(postId);
       setPosts(prev => prev.filter(p => p.id !== postId));
       message.success('Xóa bài viết thành công');
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error('Xóa bài viết thất bại');
     }
   };
+  const handleEditProfile = () => {
+    setEditingProfile(true);
+    profileForm.setFieldsValue({
+      username: user.username,
+      email: user.email,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProfile(false);
+    setAvatarFile(null);
+    setPreviewAvatar(user.avatar || null);
+    profileForm.setFieldsValue({
+      username: user.username,
+      email: user.email,
+    });
+  };
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px' }}>
-      <Card style={{ marginBottom: 24 }}>
+    <div className="profile-container">
+      <Card className="profile-card">
         <Form
           form={profileForm}
           layout="vertical"
-          initialValues={{ username: user.username, email: user.email, avatar: user.avatar }}
           onFinish={onFinishProfile}
         >
-          <Row gutter={16} align="middle">
+          <Row gutter={24} align="middle" className="profile-header">
             <Col>
               <Avatar
-                size={100}
-                src={user.avatar || undefined}
-                icon={!user.avatar && <UserOutlined />}
+                size={96}
+                src={
+                  avatarFile
+                    ? URL.createObjectURL(avatarFile)
+                    : previewAvatar
+                    ? getImageUrl(previewAvatar)
+                    : undefined
+                }
+                icon={<UserOutlined />}
               />
             </Col>
+
             <Col flex="auto">
               {!editingProfile ? (
                 <>
                   <Title level={3}>{user.username}</Title>
-                  <Text type="secondary"><MailOutlined /> {user.email}</Text>
-                  <div style={{ marginTop: 12 }}>
+                  <Text type="secondary">
+                    <MailOutlined /> {user.email}
+                  </Text>
+
+                  <div style={{ marginTop: 8 }}>
                     <Tag color="blue">{posts.length} bài viết</Tag>
                   </div>
-                  <div style={{ marginTop: 12 }}>
-                    <Space>
-                      <Button onClick={() => setEditingProfile(true)}>Chỉnh sửa thông tin</Button>
-                      <Button type="primary" onClick={() => navigate('/posts/new')}>
-                        Thêm bài viết mới
-                      </Button>
-                    </Space>
-                  </div>
+
+                  <Space style={{ marginTop: 16 }}>
+                    <Button onClick={handleEditProfile}>
+                      Chỉnh sửa thông tin
+                    </Button>
+                    <Button type="primary" onClick={() => navigate('/posts/new')}>
+                      Thêm bài viết mới
+                    </Button>
+                  </Space>
                 </>
               ) : (
                 <>
-                  <Form.Item label="Tên người dùng" name="username" rules={[{ required: true }]}>
+                  <Form.Item
+                    label="Tên người dùng"
+                    name="username"
+                    rules={[
+                      { required: true, message: 'Vui lòng nhập tên người dùng' },
+                      { min: 3, message: 'Tối thiểu 3 ký tự' },
+                    ]}
+                  >
                     <Input />
                   </Form.Item>
-                  <Form.Item label="Email" name="email" rules={[{ required: true }, { type: 'email' }]}>
+
+                  <Form.Item
+                    label="Email"
+                    name="email"
+                    rules={[
+                      { required: true, type: 'email', message: 'Email không hợp lệ' },
+                    ]}
+                  >
                     <Input />
                   </Form.Item>
-                  <Form.Item label="Avatar URL" name="avatar">
-                    <Input placeholder="https://example.com/avatar.jpg" />
+
+                  <Form.Item label="Đổi avatar (tùy chọn)">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => {
+                        const file = e.target.files?.[0] || null;
+                        setAvatarFile(file);
+                      }}
+                    />
                   </Form.Item>
-                  <Form.Item>
-                    <Space>
-                      <Button type="primary" htmlType="submit">Lưu</Button>
-                      <Button onClick={() => setEditingProfile(false)}>Hủy</Button>
-                    </Space>
-                  </Form.Item>
+
+                  <Space>
+                    <Button type="primary" htmlType="submit">
+                      Lưu
+                    </Button>
+                    <Button onClick={handleCancelEdit}>
+                      Hủy
+                    </Button>
+                  </Space>
                 </>
               )}
             </Col>
           </Row>
         </Form>
       </Card>
-      <Card title="Bài viết của bạn">
+      <Card title="Bài viết của bạn" className="profile-posts-card">
         {loading ? (
-          <>
-            <Skeleton active paragraph={{ rows: 3 }} />
-            <Skeleton active paragraph={{ rows: 3 }} />
-          </>
+          <Skeleton active paragraph={{ rows: 3 }} />
         ) : posts.length === 0 ? (
           <Empty description="Chưa có bài viết nào" />
         ) : (
           <List
             itemLayout="vertical"
             dataSource={posts}
-            split={false}
             renderItem={post => (
               <List.Item
                 key={post.id}
                 actions={[
                   <Button
                     type="link"
-                    key="edit"
                     onClick={() => navigate(`/posts/${post.id}/edit`)}
                   >
                     Sửa
@@ -154,31 +226,27 @@ const ProfilePage = () => {
                   <Button
                     type="link"
                     danger
-                    key="delete"
                     onClick={() => handleDeletePost(post.id)}
                   >
                     Xóa
-                  </Button>
+                  </Button>,
                 ]}
               >
-                {post.image && (
-                  <img
-                    src={post.image}
-                    alt="Ảnh bài viết"
-                    style={{
-                      width: '100%',
-                      maxHeight: 200,
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                      marginBottom: 12
-                    }}
-                  />
-                )}
+               {post.image && (
+                <div className="profile-post-image-wrapper">
+                  <img src={getImageUrl(post.image)} alt="" />
+                </div>
+              )}
+
+
                 <List.Item.Meta
                   title={<Text strong>{post.title}</Text>}
-                  description={<Text type="secondary">{dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}</Text>}
+                  description={dayjs(post.created_at).format('DD/MM/YYYY HH:mm')}
                 />
-                <Paragraph ellipsis={{ rows: 2 }}>{post.content}</Paragraph>
+
+                <Paragraph ellipsis={{ rows: 2 }}>
+                  {post.content}
+                </Paragraph>
               </List.Item>
             )}
           />

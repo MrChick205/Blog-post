@@ -12,6 +12,10 @@ export const registerApi = (data: {
 export const getMeApi = () =>
   axios.get('/users/profile/me');
 
-export const updateProfileApi = (data: { username?: string; email?: string; avatar?: string }) =>
-  axios.put('/users/profile/me', data);
+export const updateProfileApi = (data: FormData) =>
+  axios.put('/users/profile/me', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 

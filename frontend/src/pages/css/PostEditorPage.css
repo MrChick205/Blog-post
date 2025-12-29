@@ -1,0 +1,35 @@
+.post-editor-container {
+  max-width: 900px;
+  margin: 48px auto;
+  padding: 0 16px;
+}
+
+.post-editor-card {
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.08);
+  padding: 32px;
+}
+
+.post-editor-header {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.post-editor-title {
+  margin-bottom: 0;
+}
+
+.post-editor-form {
+  max-width: 720px;
+}
+
+.post-editor-image {
+  width: 240px;
+  border-radius: 12px;
+}
+
+.post-editor-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 32px;
+}

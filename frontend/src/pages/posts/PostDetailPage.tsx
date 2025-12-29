@@ -26,15 +26,12 @@ import dayjs from "dayjs";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { getPostById, deletePost } from "@/services/postService";
-import {
-  getLikeCount,
-  getLikeStatus,
-  toggleLike,
-} from "@/services/likeService";
+import { getLikeCount, getLikeStatus, toggleLike } from "@/services/likeService";
 import { getCommentsByPost, createComment } from "@/services/commentService";
 import useLoginModal from "../auth/UseLoginModal";
 import { getImageUrl } from "@/utils/image";
 
+import "../css/PostDetailPage.css"; 
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -44,15 +41,10 @@ const PostDetailPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showLoginModal } = useLoginModal();
-
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  // LIKE
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-
-  // COMMENT
   const [comments, setComments] = useState<any[]>([]);
   const [commentContent, setCommentContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -88,7 +80,6 @@ const PostDetailPage = () => {
     fetchAll();
   }, [id, user]);
 
-  // LIKE
   const handleLike = async () => {
     if (!user) {
       showLoginModal();
@@ -104,7 +95,6 @@ const PostDetailPage = () => {
     }
   };
 
-  // DELETE POST
   const handleDelete = async () => {
     if (!id) return;
     try {
@@ -116,7 +106,6 @@ const PostDetailPage = () => {
     }
   };
 
-  // SUBMIT COMMENT
   const handleSubmitComment = async () => {
     if (!user) {
       showLoginModal();
@@ -126,11 +115,7 @@ const PostDetailPage = () => {
 
     setSubmitting(true);
     try {
-      await createComment({
-        post_id: id,
-        content: commentContent,
-      });
-
+      await createComment({ post_id: id, content: commentContent });
       setCommentContent("");
       const res = await getCommentsByPost(id);
       setComments(res.data);
@@ -144,20 +129,10 @@ const PostDetailPage = () => {
   if (loading) return <Spin />;
 
   return (
-    <Card
-      style={{
-        maxWidth: 800,
-        margin: "32px auto",
-        borderRadius: 16,
-        boxShadow: "0 10px 32px rgba(0,0,0,0.08)",
-        padding: 24,
-      }}
-    >
-      {/* ===== HEADER ===== */}
-      <Space direction="vertical" size={6} style={{ width: "100%" }}>
-        <Title level={2} style={{ marginBottom: 0 }}>
-          {post.title}
-        </Title>
+    <Card className="post-detail-card">
+      {/* HEADER */}
+      <Space direction="vertical" size={6} className="post-detail-header">
+        <Title level={2} className="post-detail-title">{post.title}</Title>
 
         <Space wrap>
           <Text type="secondary">
@@ -182,12 +157,7 @@ const PostDetailPage = () => {
                 cancelText="Huỷ"
                 onConfirm={handleDelete}
               >
-                <Button
-                  size="small"
-                  danger
-                  type="link"
-                  icon={<DeleteOutlined />}
-                >
+                <Button size="small" danger type="link" icon={<DeleteOutlined />}>
                   Xoá
                 </Button>
               </Popconfirm>
@@ -198,38 +168,24 @@ const PostDetailPage = () => {
 
       <Divider />
 
-      {/* ===== IMAGE ===== */}
+      {/* IMAGE */}
       {post.image && (
         <Image
+          className="post-detail-image"
           src={getImageUrl(post.image)}
-          style={{
-            width: "100%",
-            maxHeight: 420,
-            objectFit: "cover",
-            borderRadius: 12,
-            marginBottom: 16,
-          }}
         />
       )}
 
-      {/* ===== CONTENT ===== */}
-      <Paragraph style={{ fontSize: 16, lineHeight: 1.7 }}>
-        {post.content}
-      </Paragraph>
+      {/* CONTENT */}
+      <Paragraph className="post-detail-paragraph">{post.content}</Paragraph>
 
       <Divider />
 
-      {/* ===== ACTIONS ===== */}
-      <Space size="large">
+      {/* ACTIONS */}
+      <Space size="large" className="post-detail-actions">
         <Button
           type="text"
-          icon={
-            liked ? (
-              <LikeFilled style={{ color: "#1677ff" }} />
-            ) : (
-              <LikeOutlined />
-            )
-          }
+          icon={liked ? <LikeFilled style={{ color: "#1677ff" }} /> : <LikeOutlined />}
           onClick={handleLike}
         >
           {likeCount}
@@ -243,21 +199,19 @@ const PostDetailPage = () => {
 
       <Divider />
 
-      {/* ===== COMMENT INPUT ===== */}
-      <div>
+      {/* COMMENT INPUT */}
+      <div className="post-detail-comment-input">
         <Title level={4}>Bình luận</Title>
-
         <TextArea
           rows={3}
           placeholder="Viết bình luận..."
           value={commentContent}
           onChange={(e) => setCommentContent(e.target.value)}
         />
-
         <Button
           type="primary"
           loading={submitting}
-          style={{ marginTop: 8 }}
+          className="post-detail-comment-button"
           disabled={!commentContent.trim()}
           onClick={handleSubmitComment}
         >
@@ -265,21 +219,16 @@ const PostDetailPage = () => {
         </Button>
       </div>
 
-      {/* ===== COMMENT LIST ===== */}
+      {/* COMMENT LIST */}
       <List
-        style={{ marginTop: 24 }}
+        className="post-detail-comment-list"
         dataSource={comments}
         locale={{ emptyText: "Chưa có bình luận" }}
         itemLayout="horizontal"
         renderItem={(comment) => (
           <List.Item>
             <List.Item.Meta
-              avatar={
-                <Avatar
-                  src={comment.user_avatar}
-                  icon={<UserOutlined />}
-                />
-              }
+              avatar={<Avatar src={comment.user_avatar} icon={<UserOutlined />} />}
               title={
                 <Space>
                   <Text strong>{comment.username || "Ẩn danh"}</Text>
@@ -288,18 +237,13 @@ const PostDetailPage = () => {
                   </Text>
                 </Space>
               }
-              description={
-                <Paragraph style={{ marginBottom: 0 }}>
-                  {comment.content}
-                </Paragraph>
-              }
+              description={<Paragraph style={{ marginBottom: 0 }}>{comment.content}</Paragraph>}
             />
           </List.Item>
         )}
       />
     </Card>
   );
-
 };
 
 export default PostDetailPage;

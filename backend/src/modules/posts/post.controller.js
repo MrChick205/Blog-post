@@ -3,17 +3,30 @@ const postModel = require('./post.model');
 class PostController {
   async createPost(req, res) {
     try {
-      const { title, content, image } = req.body;
+      console.log('BODY:', req.body);
+      console.log('FILE:', req.file);
+      const { title, content } = req.body;
       const user_id = req.userId;
 
       if (!title || !content) {
         return res.status(400).json({ error: 'Title and content are required' });
       }
 
-      const post = await postModel.create({ title, content, image, user_id });
+      // ✅ LẤY ẢNH TỪ req.file
+      const image = req.file
+        ? `/uploads/posts/${req.file.filename}`
+        : null;
+
+      const post = await postModel.create({
+        title,
+        content,
+        image,
+        user_id,
+      });
+
       res.status(201).json({
         message: 'Post created successfully',
-        post
+        post,
       });
     } catch (error) {
       console.error('Create post error:', error);
@@ -54,11 +67,12 @@ class PostController {
 
   async updatePost(req, res) {
     try {
+      console.log('BODY:', req.body);
+      console.log('FILE:', req.file);
       const { id } = req.params;
-      const { title, content, image } = req.body;
+      const { title, content } = req.body;
       const user_id = req.userId;
 
-      // Check if post exists and belongs to user
       const existingPost = await postModel.findById(id);
       if (!existingPost) {
         return res.status(404).json({ error: 'Post not found' });
@@ -68,10 +82,20 @@ class PostController {
         return res.status(403).json({ error: 'You can only update your own posts' });
       }
 
-      const post = await postModel.update(id, { title, content, image });
+      // ✅ CHỈ CÓ FILE MỚI THÌ MỚI UPDATE image
+      const image = req.file
+        ? `/uploads/posts/${req.file.filename}`
+        : undefined;
+
+      const post = await postModel.update(id, {
+        title,
+        content,
+        image,
+      });
+
       res.json({
         message: 'Post updated successfully',
-        post
+        post,
       });
     } catch (error) {
       console.error('Update post error:', error);

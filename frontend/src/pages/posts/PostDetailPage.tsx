@@ -33,6 +33,8 @@ import {
 } from "@/services/likeService";
 import { getCommentsByPost, createComment } from "@/services/commentService";
 import useLoginModal from "../auth/UseLoginModal";
+import { getImageUrl } from "@/utils/image";
+
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -199,7 +201,7 @@ const PostDetailPage = () => {
       {/* ===== IMAGE ===== */}
       {post.image && (
         <Image
-          src={post.image}
+          src={getImageUrl(post.image)}
           style={{
             width: "100%",
             maxHeight: 420,

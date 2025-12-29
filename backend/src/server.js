@@ -19,20 +19,13 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+const shutdown = () => {
+  console.log('Shutting down server...');
   pool.end(() => {
     console.log('Database pool closed');
     process.exit(0);
   });
-});
+};
 
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
-  pool.end(() => {
-    console.log('Database pool closed');
-    process.exit(0);
-  });
-});
-
-
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

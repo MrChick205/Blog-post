@@ -5,20 +5,19 @@ export const getAllPosts = () => axios.get('/posts');
 export const getPostById = (id: string) =>
   axios.get(`/posts/${id}`);
 
-export const createPost = (data: {
-  title: string;
-  content: string;
-  image?: string;
-}) => axios.post('/posts', data);
+export const createPost = (data: FormData) =>
+  axios.post('/posts', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 
-export const updatePost = (
-  id: string,
-  data: {
-    title: string;
-    content: string;
-    image?: string;
-  }
-) => axios.put(`/posts/${id}`, data);
+export const updatePost = (id: string, data: FormData) =>
+  axios.put(`/posts/${id}`, data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 
 export const deletePost = (id: string) =>
   axios.delete(`/posts/${id}`);

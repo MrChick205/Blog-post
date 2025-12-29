@@ -7,6 +7,7 @@ import {
   message,
   Divider,
   Space,
+  Image,
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -17,6 +18,7 @@ import {
   updatePost,
 } from '../../services/postService';
 import { Post } from '../../types';
+import { getImageUrl } from '@/utils/image';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -28,7 +30,6 @@ interface PostEditorPageProps {
 interface PostFormValues {
   title: string;
   content: string;
-  image?: string;
 }
 
 const PostEditorPage = ({ mode }: PostEditorPageProps) => {
@@ -36,8 +37,13 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [form] = Form.useForm<PostFormValues>();
+
   const [loading, setLoading] = useState(mode === 'edit');
   const [submitting, setSubmitting] = useState(false);
+
+  // ===== IMAGE STATE =====
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!user) navigate('/login');
@@ -50,11 +56,14 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
         try {
           const res = await getPostById(id);
           const post: Post = res.data;
+
           form.setFieldsValue({
             title: post.title,
             content: post.content,
-            image: post.image,
           });
+
+          // ✅ LƯU ẢNH CŨ
+          setCurrentImage(post.image || null);
         } catch {
           message.error('Không thể tải bài viết');
         } finally {
@@ -62,23 +71,33 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
         }
       }
     };
+
     fetchPost();
   }, [mode, id, form]);
 
   const onFinish = async (values: PostFormValues) => {
     setSubmitting(true);
     try {
+      const formData = new FormData();
+      formData.append('title', values.title);
+      formData.append('content', values.content);
+
+      // ✅ CHỈ GỬI FILE KHI USER CHỌN ẢNH MỚI
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
       if (mode === 'create') {
-        await createPost(values);
+        await createPost(formData);
         message.success('Đã tạo bài viết');
         navigate('/posts');
-      } else if (mode === 'edit' && id) {
-        await updatePost(id, values);
+      }
+
+      if (mode === 'edit' && id) {
+        await updatePost(id, formData);
         message.success('Đã cập nhật bài viết');
         navigate(`/posts/${id}`);
       }
-    } catch (err: any) {
-      message.error(err.response?.data?.message || 'Có lỗi xảy ra');
     } finally {
       setSubmitting(false);
     }
@@ -93,13 +112,7 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: '48px auto',
-        padding: '0 16px',
-      }}
-    >
+    <div style={{ maxWidth: 900, margin: '48px auto', padding: '0 16px' }}>
       <Card
         loading={loading}
         style={{
@@ -134,11 +147,7 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
             name="title"
             rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}
           >
-            <Input
-              size="large"
-              placeholder="Nhập tiêu đề bài viết"
-              style={{ borderRadius: 10 }}
-            />
+            <Input size="large" placeholder="Nhập tiêu đề bài viết" />
           </Form.Item>
 
           <Form.Item
@@ -146,42 +155,48 @@ const PostEditorPage = ({ mode }: PostEditorPageProps) => {
             name="content"
             rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
           >
-            <TextArea
-              rows={10}
-              placeholder="Viết nội dung bài viết tại đây..."
-              style={{
-                borderRadius: 10,
-                fontSize: 15,
-                lineHeight: 1.6,
-              }}
-            />
+            <TextArea rows={10} />
           </Form.Item>
 
-          <Form.Item label="Ảnh đại diện (URL)" name="image">
-            <Input
-              size="large"
-              placeholder="https://example.com/image.jpg"
-              style={{ borderRadius: 10 }}
+          {/* ===== ẢNH HIỆN TẠI ===== */}
+          {currentImage && !imageFile && (
+            <Form.Item label="Ảnh hiện tại">
+              <Image
+                src={getImageUrl(currentImage) || ''}
+                width={240}
+                style={{ borderRadius: 12 }}
+              />
+            </Form.Item>
+          )}
+
+          {/* ===== PREVIEW ẢNH MỚI ===== */}
+          {imageFile && (
+            <Form.Item label="Ảnh mới">
+              <Image
+                src={URL.createObjectURL(imageFile)}
+                width={240}
+                style={{ borderRadius: 12 }}
+              />
+            </Form.Item>
+          )}
+
+          {/* ===== FILE INPUT ===== */}
+          <Form.Item label="Đổi ảnh (tuỳ chọn)">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setImageFile(file);
+              }}
             />
           </Form.Item>
 
           {/* ===== ACTIONS ===== */}
           <Form.Item style={{ marginTop: 32 }}>
-            <Space
-              size="middle"
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Button onClick={handleCancel}>
-                Hủy
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={submitting}
-              >
+            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button onClick={handleCancel}>Hủy</Button>
+              <Button type="primary" htmlType="submit" loading={submitting}>
                 {mode === 'create' ? 'Đăng bài' : 'Lưu thay đổi'}
               </Button>
             </Space>
